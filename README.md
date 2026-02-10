@@ -50,9 +50,10 @@ CREATE TABLE order_items (
     product_id INT REFERENCES products(id),
     quantity INT DEFAULT 0 CHECK (quantity > 0)
 );
+
 # Задание 2
 
- Сумма товаров по каждому клиенту
+-- Сумма товаров по каждому клиенту
  
  SELECT
     c.name AS client_name,
@@ -68,7 +69,7 @@ JOIN
 GROUP BY
     c.name;
 
-Количество дочерних элементов первого уровня вложенности для каждой категории
+-- Количество дочерних элементов первого уровня вложенности для каждой категории
 
 SELECT
     c.parent_id,
@@ -80,7 +81,7 @@ WHERE
 GROUP BY
     c.parent_id;
 
-Отчет топ-5 самых продаваемых товаров за последний месяц
+-- Отчет топ-5 самых продаваемых товаров за последний месяц
 
 WITH last_month_orders AS (
     SELECT *
@@ -107,4 +108,6 @@ ORDER BY
     sold_quantity DESC
 LIMIT 5;
 
-    
+# Задание 3
+
+Запуск сервиса с помощью make. 'make run' в корне проекта.
