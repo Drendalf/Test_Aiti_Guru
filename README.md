@@ -2,6 +2,7 @@
 # Задание 1
 
 -- Таблица номенклатуры
+
 CREATE TABLE products (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
@@ -10,6 +11,7 @@ CREATE TABLE products (
 );
 
 -- Дерево категорий (категории товаров с произвольной глубиной вложенности)
+
 CREATE TABLE categories (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
@@ -17,6 +19,7 @@ CREATE TABLE categories (
 );
 
 -- Связь продуктов с категориями
+
 CREATE TABLE product_categories (
     product_id INT REFERENCES products(id),
     category_id INT REFERENCES categories(id),
@@ -24,6 +27,7 @@ CREATE TABLE product_categories (
 );
 
 -- Таблица клиентов
+
 CREATE TABLE customers (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
@@ -31,6 +35,7 @@ CREATE TABLE customers (
 );
 
 -- Таблица заказов
+
 CREATE TABLE orders (
     id SERIAL PRIMARY KEY,
     customer_id INT REFERENCES customers(id),
@@ -38,6 +43,7 @@ CREATE TABLE orders (
 );
 
 -- Состав заказа (товары в заказе)
+
 CREATE TABLE order_items (
     id SERIAL PRIMARY KEY,
     order_id INT REFERENCES orders(id),
@@ -47,6 +53,7 @@ CREATE TABLE order_items (
 # Задание 2
 
  Сумма товаров по каждому клиенту
+ 
  SELECT
     c.name AS client_name,
     SUM(p.price * oi.quantity) AS total_amount
