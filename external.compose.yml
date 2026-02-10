@@ -1,0 +1,14 @@
+services:
+  postgres:
+    container_name: postgres
+    image: postgres:dev
+    env_file:
+    - ./external/postgres/db.env
+    ports:
+    - 0.0.0.0:5432:5432
+    networks:
+    - test_aiti_guru
+    attach: false
+networks:
+  test_aiti_guru:
+    driver: bridge

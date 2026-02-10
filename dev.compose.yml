@@ -1,0 +1,11 @@
+services:
+  asg:
+    container_name: test_aiti_guru
+    image: test_aiti_guru:dev
+    ports:
+    - 0.0.0.0:5000:5000
+    networks:
+    - test_aiti_guru
+networks:
+  test_aiti_guru:
+    driver: bridge
