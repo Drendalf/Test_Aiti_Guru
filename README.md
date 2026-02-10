@@ -1,51 +1,113 @@
-# ASG одежда
+# Test_Aiti_Guru
+# Задание 1
 
-В репозитории формируется бэкенд для магазина одежды с возможностью печати на ней принтов и вышивки.
-Бэкенд представляет из себя модульный монолит. При необходимости возможно его разделение на
-отдельные сервисы с выносом в отдельные репозитории.
+-- Таблица номенклатуры
 
-При разработке проекта применяется подходы "сначала спецификация" и TDD.
+CREATE TABLE products (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    quantity INT DEFAULT 0 CHECK (quantity >= 0),
+    price DECIMAL(10, 2) NOT NULL
+);
 
-## Зависимости проекта
+-- Дерево категорий (категории товаров с произвольной глубиной вложенности)
 
-* make - автоматизация управления проектом.
-* docker-compose-plugin - запуск проекта и дополнительных сервисов в различных условиях.
-* pyenv (https://github.com/pyenv/pyenv) - установка версии Python для проекта.
+CREATE TABLE categories (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    parent_id INT REFERENCES categories(id)
+);
 
-## Команды проекта
+-- Связь продуктов с категориями
 
-1. `make test` - Запуск тестов в контейнере.
-2. `make run` - Запуск проекта в контейнере.
+CREATE TABLE product_categories (
+    product_id INT REFERENCES products(id),
+    category_id INT REFERENCES categories(id),
+    PRIMARY KEY(product_id, category_id)
+);
 
-Остальные команды описаны в `Makefile`.
+-- Таблица клиентов
 
-Проект разрабатывается таким образом, чтобы была возможность запуска тестов с использованием
-инструментов из IDE.
+CREATE TABLE customers (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    address TEXT
+);
 
-## Управление миграциями базы данных
+-- Таблица заказов
 
-Команды:
+CREATE TABLE orders (
+    id SERIAL PRIMARY KEY,
+    customer_id INT REFERENCES customers(id),
+    order_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 
-1. `make init_db` - Инициализация папки с миграциями. Запускается при начале ведения проекта или при
-   выходе на прод, чтобы не тащить миграции созданные в процессе разработки.
-2. `make migrate_db` - Создание миграции при изменении схемы БД. Комментарий к новой миграции менять
-   в Makefile и оставлять там, чтобы он попал в коммит.
-3. `make upgrate_db` - Применении миграции при изменении схемы БД.
+-- Состав заказа (товары в заказе)
 
-## Отправка TOTP
+CREATE TABLE order_items (
+    id SERIAL PRIMARY KEY,
+    order_id INT REFERENCES orders(id),
+    product_id INT REFERENCES products(id),
+    quantity INT DEFAULT 0 CHECK (quantity > 0)
+);
 
-Для отправки TOTP необходим ключ шифрования. Ключ шифрования присваивается каждому пользователю
-уникальный. При выходе пользователя из системы он меняется на новый.
+# Задание 2
 
-## CI/CD
+-- Сумма товаров по каждому клиенту
+ 
+ SELECT
+    c.name AS client_name,
+    SUM(p.price * oi.quantity) AS total_amount
+FROM
+    customers c
+JOIN
+    orders o ON c.id = o.customer_id
+JOIN
+    order_items oi ON o.id = oi.order_id
+JOIN
+    products p ON oi.product_id = p.id
+GROUP BY
+    c.name;
 
-В проекте применяется CI/CD, процесс сформирован для раннеров Gitlab. На прод доставляются только те
-изменения, которые прошли ревью и были приняты в `main`. Никакие незафиксированные в репозитории
-изменения НЕ деплоятся.
+-- Количество дочерних элементов первого уровня вложенности для каждой категории
 
-## Служебные эндпоинты
+SELECT
+    c.parent_id,
+    COUNT(*) AS child_count
+FROM
+    categories c
+WHERE
+    c.parent_id IS NOT NULL
+GROUP BY
+    c.parent_id;
 
-* `GET /alive` - проверка, что приложение запущено.
-* `GET /ready` - при вызове данного эндпоинта проверяется доступность внешних сервисов.
-* `GET /collapse` - вызывает исключение для проверки работы системы обработки ошибок.
-* `GET /docs` - SwaggerUI-интерфейс для спецификации API.
+-- Отчет топ-5 самых продаваемых товаров за последний месяц
+
+WITH last_month_orders AS (
+    SELECT *
+    FROM orders
+    WHERE order_date >= NOW() - INTERVAL '1 month'
+)
+SELECT
+    p.name AS product_name,
+    cat.name AS top_level_category,
+    SUM(oi.quantity) AS sold_quantity
+FROM
+    last_month_orders lmo
+JOIN
+    order_items oi ON lmo.id = oi.order_id
+JOIN
+    products p ON oi.product_id = p.id
+LEFT JOIN
+    product_categories pc ON p.id = pc.product_id
+LEFT JOIN
+    categories cat ON pc.category_id = cat.id AND cat.parent_id IS NULL -- выбираем корневые категории
+GROUP BY
+    p.name, cat.name
+ORDER BY
+    sold_quantity DESC
+LIMIT 5;
+
+# Задание 3
+
+Запуск сервиса с помощью make. 'make run' в корне проекта.
